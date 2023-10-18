@@ -6,9 +6,12 @@
 #include <cstdint>
 #include <cstddef>
 #include <random>
+#include <chrono>
 
+using Clock = std::chrono::high_resolution_clock;
+using Duration = std::chrono::duration<double>;
 
-#ifdef _NDEBUG
+#ifdef NDEBUG
 constexpr uint32_t N = 10'000'000;
 #else
 constexpr uint32_t N = 1'000;
@@ -54,10 +57,15 @@ int main()
     create_msgpack(buffer);
     CountVisitor count_visitor{};
     SumVisitor sum_visitor{};
+    auto const t1 = Clock::now();
     msgpack::parse(buffer.data(), buffer.size(), count_visitor);
+    auto const t2 = Clock::now();
     msgpack::parse(buffer.data(), buffer.size(), sum_visitor);
-    std::cout << "Count visitor, count: " << count_visitor.count << ", sum: " << count_visitor.sum << std::endl;
-    std::cout << "Sum visitor, count: " << sum_visitor.count << ", sum: " << sum_visitor.sum << std::endl;
+    auto const t3 = Clock::now();
+    auto const count_visitor_time = Duration(t2 - t1);
+    auto const sum_visitor_time = Duration(t3 - t2);
+    std::cout << "Count visitor, count: " << count_visitor.count << ", sum: " << count_visitor.sum << ", duration: " << count_visitor_time.count() << std::endl;
+    std::cout << "Sum visitor, count: " << sum_visitor.count << ", sum: " << sum_visitor.sum << ", duration: " << sum_visitor_time.count() << std::endl;
 
     return 0;
 }
