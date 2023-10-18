@@ -24,10 +24,38 @@ void create_msgpack(msgpack::sbuffer& buffer) {
     }
 }
 
+struct CountVisitor : msgpack::null_visitor {
+    uint32_t count{};
+    bool start_array_item() {
+        ++count;
+        return true;
+    }
+};
+
+struct SumVisitor : msgpack::null_visitor {
+    uint32_t count{};
+    double sum{};
+    bool start_array_item() {
+        ++count;
+        return true;
+    }
+    bool visit_float64(double v) {
+        sum += v;
+        return true;
+    }
+};
+
 int main()
 {
     std::cout << "Hello CMake." << std::endl;
     msgpack::sbuffer buffer;
     create_msgpack(buffer);
+    CountVisitor count_visitor{};
+    SumVisitor sum_visitor{};
+    msgpack::parse(buffer.data(), buffer.size(), count_visitor);
+    msgpack::parse(buffer.data(), buffer.size(), sum_visitor);
+    std::cout << "Count: " << count_visitor.count << std::endl;
+    std::cout << "Count: " << sum_visitor.count << ", sum: " << sum_visitor.sum << std::endl;
+
     return 0;
 }
