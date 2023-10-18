@@ -29,9 +29,6 @@ struct CountVisitor : msgpack::null_visitor {
     double sum{};
     bool start_array_item() {
         ++count;
-        return true;
-    }
-    bool visit_float64(double) {
         sum += 0.5;
         return true;
     }
