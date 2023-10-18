@@ -26,8 +26,13 @@ void create_msgpack(msgpack::sbuffer& buffer) {
 
 struct CountVisitor : msgpack::null_visitor {
     uint32_t count{};
+    double sum{};
     bool start_array_item() {
         ++count;
+        return true;
+    }
+    bool visit_float64(double) {
+        sum += 0.5;
         return true;
     }
 };
@@ -54,8 +59,8 @@ int main()
     SumVisitor sum_visitor{};
     msgpack::parse(buffer.data(), buffer.size(), count_visitor);
     msgpack::parse(buffer.data(), buffer.size(), sum_visitor);
-    std::cout << "Count: " << count_visitor.count << std::endl;
-    std::cout << "Count: " << sum_visitor.count << ", sum: " << sum_visitor.sum << std::endl;
+    std::cout << "Count visitor, count: " << count_visitor.count << ", sum: " << count_visitor.sum << std::endl;
+    std::cout << "Sum visitor, count: " << sum_visitor.count << ", sum: " << sum_visitor.sum << std::endl;
 
     return 0;
 }
