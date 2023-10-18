@@ -2,6 +2,16 @@
 //
 
 #include <iostream>
+#include <msgpack.hpp>
+#include <cstdint>
+#include <cstddef>
+
+
+#ifdef _NDEBUG
+constexpr uint32_t N = 10'000'000;
+#else
+constexpr uint32_t N = 1'000;
+#endif
 
 
 int main()
