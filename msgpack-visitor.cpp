@@ -125,7 +125,7 @@ namespace {
         3,
         1,
         0,
-        "inf",
+        3,
         0.22e6
       ],
       [
@@ -133,8 +133,8 @@ namespace {
         3,
         1,
         0,
-        "-inf",
-        "+inf"
+        5,
+        7
       ]
     ]
   }
@@ -216,22 +216,22 @@ namespace {
       "sym_load": [
         [
           37,
-          "-inf",
-          "inf"
+          4,
+          5
         ]
       ],
       "asym_load": [
         {
           "id": 31,
           "q_specified": [
-            "inf",
+            2,
             80.0,
-            "+inf"
+            3
           ],
           "p_specified": [
-            "-inf",
+            4,
             75.0,
-            "-inf"
+            1
           ]
         }
       ]
