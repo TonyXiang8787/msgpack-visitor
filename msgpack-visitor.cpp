@@ -290,9 +290,15 @@ struct MapKeyVisitor : DefaultErrorVisitor {
     std::string_view str{};
     bool visit_str(const char* v, uint32_t size) {
         str = {v, size};
-        return false;
+        return true;
     }
 };
+
+std::string_view get_key(char const* data, size_t length, size_t& offset) {
+    MapKeyVisitor visitor{};
+    msgpack::parse(data, length, offset, visitor);
+    return visitor.str;
+}
 
 int main() {
     std::cout << "Hello CMake." << std::endl;
@@ -303,7 +309,6 @@ int main() {
     // parse global dict
     GlobalVisitor global_visitor{};
     msgpack::parse(data, length, offset, global_visitor);
-    RootVisitor root_visitor{};
-    msgpack::parse(data, 12, offset, root_visitor); // length is the total length
+    std::cout << get_key(data, length, offset);
     return 0;
 }
