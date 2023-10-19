@@ -6,6 +6,8 @@ cmake_minimum_required (VERSION 3.23)
 project ("msgpack-visitor")
 
 find_package(msgpack-cxx REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+
 
 
 set(CMAKE_CXX_STANDARD 20)
@@ -17,5 +19,5 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 add_executable (msgpack-visitor "msgpack-visitor.cpp" )
 
 target_link_libraries(msgpack-visitor
-	PRIVATE msgpack-cxx
+	PRIVATE msgpack-cxx nlohmann_json::nlohmann_json
 )
