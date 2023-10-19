@@ -1,18 +1,18 @@
 ﻿// msgpack-visitor.cpp : Defines the entry point for the application.
 //
 
+#include <cstddef>
+#include <cstdint>
+#include <exception>
 #include <iostream>
 #include <msgpack.hpp>
-#include <cstdint>
-#include <cstddef>
-#include <vector>
-#include <string_view>
 #include <nlohmann/json.hpp>
-#include <exception>
+#include <string_view>
+#include <vector>
 
 // single data
 namespace {
-    constexpr std::string_view json_single = R"(
+constexpr std::string_view json_single = R"(
 {
   "version": "1.0",
   "type": "input",
@@ -145,7 +145,7 @@ namespace {
 
 // batch data
 namespace {
-    constexpr std::string_view json_batch = R"(
+constexpr std::string_view json_batch = R"(
 {
   "version": "1.0",
   "type": "update",
@@ -244,71 +244,30 @@ namespace {
 
 // default error visitor
 struct DefaultErrorVisitor {
-    bool visit_nil() {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    bool visit_boolean(bool /*v*/) {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    bool visit_positive_integer(uint64_t /*v*/) {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    bool visit_negative_integer(int64_t /*v*/) {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    bool visit_float32(float /*v*/) {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    bool visit_float64(double /*v*/) {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    bool visit_str(const char* /*v*/, uint32_t /*size*/) {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    bool visit_bin(const char* /*v*/, uint32_t /*size*/) {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    bool visit_ext(const char* /*v*/, uint32_t /*size*/) {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    bool start_array(uint32_t /*num_elements*/) {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    bool start_array_item() {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    bool end_array_item() {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    bool end_array() {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    bool start_map(uint32_t /*num_kv_pairs*/) {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    bool start_map_key() {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    bool end_map_key() {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    bool start_map_value() {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    bool end_map_value() {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    bool end_map() {
-        throw std::exception{ "Unexpected data type!\n" };
-    }
-    void parse_error(size_t /*parsed_offset*/, size_t /*error_offset*/) {
-        throw std::exception{ "Error in parsing!\n" };
-    }
+    bool visit_nil() { throw std::exception{"Unexpected data type!\n"}; }
+    bool visit_boolean(bool /*v*/) { throw std::exception{"Unexpected data type!\n"}; }
+    bool visit_positive_integer(uint64_t /*v*/) { throw std::exception{"Unexpected data type!\n"}; }
+    bool visit_negative_integer(int64_t /*v*/) { throw std::exception{"Unexpected data type!\n"}; }
+    bool visit_float32(float /*v*/) { throw std::exception{"Unexpected data type!\n"}; }
+    bool visit_float64(double /*v*/) { throw std::exception{"Unexpected data type!\n"}; }
+    bool visit_str(const char* /*v*/, uint32_t /*size*/) { throw std::exception{"Unexpected data type!\n"}; }
+    bool visit_bin(const char* /*v*/, uint32_t /*size*/) { throw std::exception{"Unexpected data type!\n"}; }
+    bool visit_ext(const char* /*v*/, uint32_t /*size*/) { throw std::exception{"Unexpected data type!\n"}; }
+    bool start_array(uint32_t /*num_elements*/) { throw std::exception{"Unexpected data type!\n"}; }
+    bool start_array_item() { throw std::exception{"Unexpected data type!\n"}; }
+    bool end_array_item() { throw std::exception{"Unexpected data type!\n"}; }
+    bool end_array() { throw std::exception{"Unexpected data type!\n"}; }
+    bool start_map(uint32_t /*num_kv_pairs*/) { throw std::exception{"Unexpected data type!\n"}; }
+    bool start_map_key() { throw std::exception{"Unexpected data type!\n"}; }
+    bool end_map_key() { throw std::exception{"Unexpected data type!\n"}; }
+    bool start_map_value() { throw std::exception{"Unexpected data type!\n"}; }
+    bool end_map_value() { throw std::exception{"Unexpected data type!\n"}; }
+    bool end_map() { throw std::exception{"Unexpected data type!\n"}; }
+    void parse_error(size_t /*parsed_offset*/, size_t /*error_offset*/) { throw std::exception{"Error in parsing!\n"}; }
     void insufficient_bytes(size_t /*parsed_offset*/, size_t /*error_offset*/) {
-        throw std::exception{ "Error in parsing!\n" };
+        throw std::exception{"Error in parsing!\n"};
     }
 };
-
 
 std::vector<char> create_msgpack(std::string_view json_string) {
     std::vector<char> res;
@@ -317,28 +276,25 @@ std::vector<char> create_msgpack(std::string_view json_string) {
     return res;
 }
 
-
 struct GlobalVisitor : DefaultErrorVisitor {
     uint32_t root_map_size{};
     bool start_map(uint32_t num_kv_pairs) {
         root_map_size = num_kv_pairs;
         return true;
     }
-    bool start_map_key() {
+    bool start_map_key() { return false; }
+    bool end_map() { return false; }
+};
+
+struct MapKeyVisitor : DefaultErrorVisitor {
+    std::string_view str{};
+    bool visit_str(const char* v, uint32_t size) {
+        str = {v, size};
         return false;
     }
 };
 
-struct RootVisitor : DefaultErrorVisitor {
-    bool visit_str(const char* v, uint32_t size) {
-        std::cout << std::string_view{ v, size } << '\n';
-        return true;
-    }
-};
-
-
-int main()
-{
+int main() {
     std::cout << "Hello CMake." << std::endl;
     auto const msgpack_data = create_msgpack(json_single);
     char const* const data = msgpack_data.data();
@@ -348,6 +304,6 @@ int main()
     GlobalVisitor global_visitor{};
     msgpack::parse(data, length, offset, global_visitor);
     RootVisitor root_visitor{};
-    msgpack::parse(data, 12, offset, root_visitor);  // length is the total length
+    msgpack::parse(data, 12, offset, root_visitor); // length is the total length
     return 0;
 }
