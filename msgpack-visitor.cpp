@@ -348,6 +348,6 @@ int main()
     GlobalVisitor global_visitor{};
     msgpack::parse(data, length, offset, global_visitor);
     RootVisitor root_visitor{};
-    msgpack::parse(data, length, offset, root_visitor);
+    msgpack::parse(data, 12, offset, root_visitor);  // length is the total length
     return 0;
 }
