@@ -7,6 +7,7 @@
 #include <iostream>
 #include <msgpack.hpp>
 #include <nlohmann/json.hpp>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -242,16 +243,25 @@ constexpr std::string_view json_batch = R"(
 
 } // namespace
 
+class SerializationError : public std::runtime_error {
+  public:
+    using std::runtime_error::runtime_error;
+};
+
 // default null visitor with parse error
 struct DefaultNullVisitor : msgpack::null_visitor {
-    void parse_error(size_t /*parsed_offset*/, size_t /*error_offset*/) { throw std::exception{"Error in parsing!\n"}; }
+    void parse_error(size_t /*parsed_offset*/, size_t /*error_offset*/) {
+        throw SerializationError{"Error in parsing!\n"};
+    }
     void insufficient_bytes(size_t /*parsed_offset*/, size_t /*error_offset*/) {
-        throw std::exception{"Error in parsing!\n"};
+        throw SerializationError{"Error in parsing!\n"};
     }
 };
 
 // default error visitor
-struct DefaultErrorVisitor : DefaultNullVisitor {
+template <class T> struct DefaultErrorVisitor : DefaultNullVisitor {
+    static constexpr std::string_view err_msg = "Unexpected data type !\n";
+
     bool visit_nil() { return throw_error(); }
     bool visit_boolean(bool /*v*/) { return throw_error(); }
     bool visit_positive_integer(uint64_t /*v*/) { return throw_error(); }
@@ -272,7 +282,9 @@ struct DefaultErrorVisitor : DefaultNullVisitor {
     bool end_map_value() { return throw_error(); }
     bool end_map() { return throw_error(); }
 
-    bool throw_error() { throw std::exception{"Unexpected data type!\n"}; }
+    bool throw_error() { throw SerializationError{(static_cast<T&>(*this)).get_err_msg()}; }
+
+    std::string get_err_msg() { return std::string{T::err_msg}; }
 };
 
 std::vector<char> create_msgpack(std::string_view json_string) {
@@ -282,17 +294,17 @@ std::vector<char> create_msgpack(std::string_view json_string) {
     return res;
 }
 
-struct GlobalVisitor : DefaultErrorVisitor {
-    uint32_t root_map_size{};
+struct MapSizeVisitor : DefaultErrorVisitor<MapSizeVisitor> {
+    uint32_t map_size{};
     bool start_map(uint32_t num_kv_pairs) {
-        root_map_size = num_kv_pairs;
+        map_size = num_kv_pairs;
         return true;
     }
     bool start_map_key() { return false; }
     bool end_map() { return false; }
 };
 
-struct MapKeyVisitor : DefaultErrorVisitor {
+struct MapKeyVisitor : DefaultErrorVisitor<MapKeyVisitor> {
     std::string_view str{};
     bool visit_str(const char* v, uint32_t size) {
         str = {v, size};
@@ -313,7 +325,7 @@ int main() {
     size_t const length = msgpack_data.size();
     size_t offset{};
     // parse global dict
-    GlobalVisitor global_visitor{};
+    MapSizeVisitor global_visitor{};
     msgpack::parse(data, length, offset, global_visitor);
     std::cout << get_key(data, length, offset);
     return 0;
