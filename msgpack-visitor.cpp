@@ -242,31 +242,37 @@ constexpr std::string_view json_batch = R"(
 
 } // namespace
 
-// default error visitor
-struct DefaultErrorVisitor {
-    bool visit_nil() { throw std::exception{"Unexpected data type!\n"}; }
-    bool visit_boolean(bool /*v*/) { throw std::exception{"Unexpected data type!\n"}; }
-    bool visit_positive_integer(uint64_t /*v*/) { throw std::exception{"Unexpected data type!\n"}; }
-    bool visit_negative_integer(int64_t /*v*/) { throw std::exception{"Unexpected data type!\n"}; }
-    bool visit_float32(float /*v*/) { throw std::exception{"Unexpected data type!\n"}; }
-    bool visit_float64(double /*v*/) { throw std::exception{"Unexpected data type!\n"}; }
-    bool visit_str(const char* /*v*/, uint32_t /*size*/) { throw std::exception{"Unexpected data type!\n"}; }
-    bool visit_bin(const char* /*v*/, uint32_t /*size*/) { throw std::exception{"Unexpected data type!\n"}; }
-    bool visit_ext(const char* /*v*/, uint32_t /*size*/) { throw std::exception{"Unexpected data type!\n"}; }
-    bool start_array(uint32_t /*num_elements*/) { throw std::exception{"Unexpected data type!\n"}; }
-    bool start_array_item() { throw std::exception{"Unexpected data type!\n"}; }
-    bool end_array_item() { throw std::exception{"Unexpected data type!\n"}; }
-    bool end_array() { throw std::exception{"Unexpected data type!\n"}; }
-    bool start_map(uint32_t /*num_kv_pairs*/) { throw std::exception{"Unexpected data type!\n"}; }
-    bool start_map_key() { throw std::exception{"Unexpected data type!\n"}; }
-    bool end_map_key() { throw std::exception{"Unexpected data type!\n"}; }
-    bool start_map_value() { throw std::exception{"Unexpected data type!\n"}; }
-    bool end_map_value() { throw std::exception{"Unexpected data type!\n"}; }
-    bool end_map() { throw std::exception{"Unexpected data type!\n"}; }
+// default null visitor with parse error
+struct DefaultNullVisitor : msgpack::null_visitor {
     void parse_error(size_t /*parsed_offset*/, size_t /*error_offset*/) { throw std::exception{"Error in parsing!\n"}; }
     void insufficient_bytes(size_t /*parsed_offset*/, size_t /*error_offset*/) {
         throw std::exception{"Error in parsing!\n"};
     }
+};
+
+// default error visitor
+struct DefaultErrorVisitor : DefaultNullVisitor {
+    bool visit_nil() { return throw_error(); }
+    bool visit_boolean(bool /*v*/) { return throw_error(); }
+    bool visit_positive_integer(uint64_t /*v*/) { return throw_error(); }
+    bool visit_negative_integer(int64_t /*v*/) { return throw_error(); }
+    bool visit_float32(float /*v*/) { return throw_error(); }
+    bool visit_float64(double /*v*/) { return throw_error(); }
+    bool visit_str(const char* /*v*/, uint32_t /*size*/) { return throw_error(); }
+    bool visit_bin(const char* /*v*/, uint32_t /*size*/) { return throw_error(); }
+    bool visit_ext(const char* /*v*/, uint32_t /*size*/) { return throw_error(); }
+    bool start_array(uint32_t /*num_elements*/) { return throw_error(); }
+    bool start_array_item() { return throw_error(); }
+    bool end_array_item() { return throw_error(); }
+    bool end_array() { return throw_error(); }
+    bool start_map(uint32_t /*num_kv_pairs*/) { return throw_error(); }
+    bool start_map_key() { return throw_error(); }
+    bool end_map_key() { return throw_error(); }
+    bool start_map_value() { return throw_error(); }
+    bool end_map_value() { return throw_error(); }
+    bool end_map() { return throw_error(); }
+
+    bool throw_error() { throw std::exception{"Unexpected data type!\n"}; }
 };
 
 std::vector<char> create_msgpack(std::string_view json_string) {
