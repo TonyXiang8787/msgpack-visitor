@@ -260,7 +260,7 @@ struct DefaultNullVisitor : msgpack::null_visitor {
 
 // default error visitor
 template <class T> struct DefaultErrorVisitor : DefaultNullVisitor {
-    static constexpr std::string_view err_msg = "Unexpected data type !\n";
+    static constexpr std::string_view static_err_msg = "Unexpected data type !\n";
 
     bool visit_nil() { return throw_error(); }
     bool visit_boolean(bool /*v*/) { return throw_error(); }
@@ -284,7 +284,7 @@ template <class T> struct DefaultErrorVisitor : DefaultNullVisitor {
 
     bool throw_error() { throw SerializationError{(static_cast<T&>(*this)).get_err_msg()}; }
 
-    std::string get_err_msg() { return std::string{T::err_msg}; }
+    std::string get_err_msg() { return std::string{T::static_err_msg}; }
 };
 
 std::vector<char> create_msgpack(std::string_view json_string) {
