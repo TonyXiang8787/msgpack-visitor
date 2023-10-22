@@ -318,6 +318,14 @@ std::string_view get_key(char const* data, size_t length, size_t& offset) {
     return visitor.str;
 }
 
+void create_big_map(msgpack::sbuffer& buffer) {
+    msgpack::packer<msgpack::sbuffer> packer{buffer};
+    packer.pack_map(2000);
+    for (int i = 0; i < 4000; ++i) {
+        packer.pack(5.0);
+    }
+}
+
 int main() {
     std::cout << "Hello CMake." << std::endl;
     auto const msgpack_data = create_msgpack(json_single);
@@ -327,6 +335,16 @@ int main() {
     // parse global dict
     MapSizeVisitor global_visitor{};
     msgpack::parse(data, length, offset, global_visitor);
-    std::cout << get_key(data, length, offset);
+    std::cout << get_key(data, length, offset) << '\n';
+
+    // parse big array
+    msgpack::sbuffer buffer;
+    create_big_map(buffer);
+    global_visitor = {};
+    offset = 0;
+    msgpack::parse(buffer.data(), buffer.size(), offset, global_visitor);
+    std::cout << global_visitor.map_size << '\n';
+    std::cout << offset << '\n';
+
     return 0;
 }
