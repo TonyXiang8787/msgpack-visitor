@@ -294,14 +294,17 @@ std::vector<char> create_msgpack(std::string_view json_string) {
     return res;
 }
 
-struct MapSizeVisitor : DefaultErrorVisitor<MapSizeVisitor> {
+template <bool move_offset = true> struct MapSizeVisitor : DefaultErrorVisitor<MapSizeVisitor<move_offset>> {
     uint32_t map_size{};
     bool start_map(uint32_t num_kv_pairs) {
         map_size = num_kv_pairs;
-        return true;
+        return move_offset;
     }
     bool start_map_key() { return false; }
-    bool end_map() { return false; }
+    bool end_map() {
+        assert(map_size == 0);
+        return true;
+    }
 };
 
 struct MapKeyVisitor : DefaultErrorVisitor<MapKeyVisitor> {
@@ -326,6 +329,12 @@ void create_big_map(msgpack::sbuffer& buffer) {
     }
 }
 
+void create_empty_map(msgpack::sbuffer& buffer) {
+    msgpack::packer<msgpack::sbuffer> packer{buffer};
+    packer.pack_map(0);
+    packer.pack(5.0);
+}
+
 int main() {
     std::cout << "Hello CMake." << std::endl;
     auto const msgpack_data = create_msgpack(json_single);
@@ -343,6 +352,15 @@ int main() {
     global_visitor = {};
     offset = 0;
     msgpack::parse(buffer.data(), buffer.size(), offset, global_visitor);
+    std::cout << global_visitor.map_size << '\n';
+    std::cout << offset << '\n';
+
+    // parse zero array
+    msgpack::sbuffer buffer2;
+    create_empty_map(buffer2);
+    global_visitor = {};
+    offset = 0;
+    msgpack::parse(buffer2.data(), buffer2.size(), offset, global_visitor);
     std::cout << global_visitor.map_size << '\n';
     std::cout << offset << '\n';
 
