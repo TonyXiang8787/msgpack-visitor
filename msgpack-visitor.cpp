@@ -336,7 +336,6 @@ void create_empty_map(msgpack::sbuffer& buffer) {
 }
 
 int main() {
-    std::cout << "Hello CMake." << std::endl;
     auto const msgpack_data = create_msgpack(json_single);
     char const* const data = msgpack_data.data();
     size_t const length = msgpack_data.size();
@@ -344,7 +343,8 @@ int main() {
     // parse global dict
     MapSizeVisitor global_visitor{};
     msgpack::parse(data, length, offset, global_visitor);
-    std::cout << get_key(data, length, offset) << '\n';
+    std::cout << global_visitor.map_size << '\n';
+    std::cout << offset << '\n';
 
     // parse big array
     msgpack::sbuffer buffer;
@@ -362,6 +362,25 @@ int main() {
     offset = 0;
     msgpack::parse(buffer2.data(), buffer2.size(), offset, global_visitor);
     std::cout << global_visitor.map_size << '\n';
+    std::cout << offset << '\n';
+
+    // not moving
+    MapSizeVisitor<false> visitor{};
+    offset = 0;
+    msgpack::parse(data, length, offset, visitor);
+    std::cout << visitor.map_size << '\n';
+    std::cout << offset << '\n';
+
+    visitor = {};
+    offset = 0;
+    msgpack::parse(buffer.data(), buffer.size(), offset, visitor);
+    std::cout << visitor.map_size << '\n';
+    std::cout << offset << '\n';
+
+    visitor = {};
+    offset = 0;
+    msgpack::parse(buffer2.data(), buffer2.size(), offset, visitor);
+    std::cout << visitor.map_size << '\n';
     std::cout << offset << '\n';
 
     return 0;
